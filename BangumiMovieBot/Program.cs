@@ -10,6 +10,7 @@ namespace BangumiMovieBot
     {
         static void Main(string[] args)
         {
+
         }
     }
 }
