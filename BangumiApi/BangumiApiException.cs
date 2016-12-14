@@ -2,7 +2,7 @@
 
 namespace BangumiApi
 {
-    internal class BangumiApiException : Exception
+    public class BangumiApiException : Exception
     {
         public BangumiApiException()
         {
