@@ -10,6 +10,8 @@ using System.Xml;
 using BangumiApi;
 using BangumiApi.Model;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using Formatting = Newtonsoft.Json.Formatting;
 
 namespace BangumiMovieBot
 {
@@ -45,7 +47,7 @@ namespace BangumiMovieBot
 
         public async Task<List<MoegirlWikiInfo>> AddReleaseDateAsync(List<MoegirlWikiInfo> list)
         {
-            foreach (var moegirlWikiInfo in list.Where(t => t.ReleaseDate == null))
+            foreach (var moegirlWikiInfo in list.Where(t => t.BDReleaseDate == null))
             {
                 if (moegirlWikiInfo.BangumiInfo == null)
                 {
@@ -56,11 +58,12 @@ namespace BangumiMovieBot
                 resultXml.Load(string.Format(ReleaseDateQueryUrl,
                     WebUtility.UrlEncode(moegirlWikiInfo.BangumiInfo.JpnName.Replace("＆", " "))));
                 var nodes = resultXml.SelectNodes("/items/item/date[(../binding='Blu-ray') or (../binding='DVD')]");
+                if (nodes == null) continue;
                 foreach (XmlNode node in nodes)
                 {
                     try
                     {
-                        moegirlWikiInfo.ReleaseDate = DateTime.Parse(node.InnerText);
+                        moegirlWikiInfo.BDReleaseDate = DateTime.Parse(node.InnerText);
                         break;
                     }
                     catch
@@ -77,7 +80,8 @@ namespace BangumiMovieBot
             if (File.Exists(FilePath)) File.Delete(FilePath);
             using (var stream = File.CreateText(FilePath))
             {
-                await stream.WriteAsync(JsonConvert.SerializeObject(list));
+                await stream.WriteAsync(JsonConvert.SerializeObject(list, Formatting.Indented,
+                    new JsonSerializerSettings {ContractResolver = new CamelCasePropertyNamesContractResolver()}));
             }
         }
 
@@ -102,19 +106,19 @@ namespace BangumiMovieBot
                     }
                     var info = list.FirstOrDefault(t =>
                         t.Name == match.Groups["name"].Value &&
-                        t.ShowDate == DateTime.Parse(match.Groups["showDate"].Value) &&
+                        t.ReleaseDate == DateTime.Parse(match.Groups["showDate"].Value) &&
                         (match.Groups["releaseDate"].Value == "" ||
-                         t.ShowDate == DateTime.Parse(match.Groups["releaseDate"].Value)));
+                         t.ReleaseDate == DateTime.Parse(match.Groups["releaseDate"].Value)));
                     if (info != null) continue;
                     info = list.FirstOrDefault(t =>
                         t.Name == match.Groups["name"].Value &&
-                        t.ShowDate == DateTime.Parse(match.Groups["showDate"].Value));
+                        t.ReleaseDate == DateTime.Parse(match.Groups["showDate"].Value));
                     if (info == null)
                     {
                         info = new MoegirlWikiInfo
                         {
                             Name = match.Groups["name"].Value,
-                            ShowDate = DateTime.Parse(match.Groups["showDate"].Value)
+                            ReleaseDate = DateTime.Parse(match.Groups["showDate"].Value)
                         };
                         list.Add(info);
                     }
@@ -129,7 +133,7 @@ namespace BangumiMovieBot
                         catch (BangumiApiException exception)
                         {
                             if (exception.Message.ToLower() == "not found") searchResult = new SearchResultModel();
-                            else throw exception;
+                            else throw;
                         }
                         if (searchResult.Count != 0)
                         {
@@ -147,7 +151,7 @@ namespace BangumiMovieBot
                     }
                     try
                     {
-                        info.ReleaseDate = DateTime.Parse(match.Groups["releaseDate"].Value);
+                        info.BDReleaseDate = DateTime.Parse(match.Groups["releaseDate"].Value);
                     }
                     // ReSharper disable once EmptyGeneralCatchClause
                     catch
@@ -169,12 +173,12 @@ namespace BangumiMovieBot
         /// <summary>
         /// 上映日期
         /// </summary>
-        public DateTime ShowDate { get; set; }
+        public DateTime ReleaseDate { get; set; }
 
         /// <summary>
         /// BD发售日期
         /// </summary>
-        public DateTime? ReleaseDate { get; set; }
+        public DateTime? BDReleaseDate { get; set; }
 
         /// <summary>
         /// Bangumi Id，0为尚无数据，-1为无效数据
