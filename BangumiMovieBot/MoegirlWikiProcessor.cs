@@ -40,6 +40,67 @@ namespace BangumiMovieBot
             }
         }
 
+        public async Task GenerateBangumiDataAsync()
+        {
+            await GenerateBangumiDataAsync(await ReadFilesAsync());
+        }
+
+        public async Task GenerateBangumiDataAsync(List<MoegirlWikiInfo> list)
+        {
+            var finalList = new List<BangumiDataInfo>();
+            foreach (var moegirlWikiInfo in list.Where(t => t.BDReleaseDate != null && t.BangumiId != 0 && t.BangumiId != -1))
+            {
+                if (moegirlWikiInfo.BangumiInfo == null)
+                {
+                    moegirlWikiInfo.BangumiInfo =
+                        await BangumiApiClient.GetSubjectAsync(moegirlWikiInfo.BangumiId.ToString());
+                }
+                finalList.Add(new BangumiDataInfo
+                {
+                    Title = moegirlWikiInfo.BangumiInfo.JpnName,
+                    TitleTranslate = new Dictionary<string, List<string>>
+                    {
+                        {"zh-Hans", new List<string> {moegirlWikiInfo.BangumiInfo.ChsName}}
+                    },
+                    Lang = "ja",
+                    OfficialSite = moegirlWikiInfo.BangumiInfo.OfficalHomePage,
+                    Begin = moegirlWikiInfo.BDReleaseDate.Value,
+                    End = (moegirlWikiInfo.BDReleaseDate + new TimeSpan(30*3)).Value,
+                    Comment = "",
+                    Sites = new List<BangumiDataInfo.SiteInfo>
+                    {
+                        new BangumiDataInfo.SiteInfo
+                        {
+                            Site = "bangumi",
+                            Id = moegirlWikiInfo.BangumiId.ToString()
+                        }
+                    },
+                    ReleaseDate = moegirlWikiInfo.ReleaseDate,
+                    BDReleaseDate = moegirlWikiInfo.BDReleaseDate.Value,
+                    AnimeType = moegirlWikiInfo.BangumiInfo.AnimeType
+                });
+            }
+
+            if (!Directory.Exists("data")) Directory.CreateDirectory("data");
+            var firstDate = finalList.OrderBy(t => t.BDReleaseDate).First();
+            var lastDate = finalList.OrderByDescending(t => t.BDReleaseDate).First();
+            foreach (var year in
+                Enumerable.Range(firstDate.BDReleaseDate.Year,
+                    lastDate.BDReleaseDate.Year - firstDate.BDReleaseDate.Year + 1))
+            {
+                if (!Directory.Exists(Path.Combine("data", year.ToString())))
+                    Directory.CreateDirectory(Path.Combine("data", year.ToString()));
+                await WriteFilesAsync(finalList
+                        .Where(t => t.BDReleaseDate.Year == year && t.AnimeType == "剧场版")
+                        .OrderBy(t => t.BDReleaseDate),
+                    Path.Combine("data", year.ToString(), "movie.json"));
+                await WriteFilesAsync(finalList
+                        .Where(t => t.BDReleaseDate.Year == year && t.AnimeType == "OVA")
+                        .OrderBy(t => t.BDReleaseDate),
+                    Path.Combine("data", year.ToString(), "ova.json"));
+            }
+        }
+
         public async Task<List<MoegirlWikiInfo>> AddReleaseDateAsync()
         {
             return await AddReleaseDateAsync(await ReadFilesAsync());
@@ -75,10 +136,15 @@ namespace BangumiMovieBot
             return list;
         }
 
-        public async Task WriteFilesAsync(List<MoegirlWikiInfo> list)
+        public async Task WriteFilesAsync<T>(T list)
         {
-            if (File.Exists(FilePath)) File.Delete(FilePath);
-            using (var stream = File.CreateText(FilePath))
+            await WriteFilesAsync(list, FilePath);
+        }
+
+        public async Task WriteFilesAsync<T>(T list, string savePath)
+        {
+            if (File.Exists(savePath)) File.Delete(savePath);
+            using (var stream = File.CreateText(savePath))
             {
                 await stream.WriteAsync(JsonConvert.SerializeObject(list, Formatting.Indented,
                     new JsonSerializerSettings {ContractResolver = new CamelCasePropertyNamesContractResolver()}));
@@ -190,5 +256,69 @@ namespace BangumiMovieBot
         /// </summary>
         [JsonIgnore]
         public SubjectInfo BangumiInfo { get; set; }
+    }
+
+    public class BangumiDataInfo
+    {
+        public class SiteInfo
+        {
+            public string Site { get; set; }
+            public string Id { get; set; }
+        }
+
+        /// <summary>
+        /// 番组原始标题 [required]
+        /// </summary>
+        public string Title { get; set; }
+
+        /// <summary>
+        /// 番组标题翻译 [required]
+        /// </summary>
+        public Dictionary<string,List<string>> TitleTranslate { get; set; }
+
+        /// <summary>
+        /// 番组语言 [required]
+        /// </summary>
+        public string Lang { get; set; }
+
+        /// <summary>
+        /// 官网 [required]
+        /// </summary>
+        public string OfficialSite { get; set; }
+
+        /// <summary>
+        /// 番组开始时间，还未确定则置空 [required]
+        /// </summary>
+        public DateTime Begin { get; set; }
+
+        /// <summary>
+        /// 番组开始时间，还未确定则置空 [required]
+        /// </summary>
+        public DateTime End { get; set; }
+
+        /// <summary>
+        /// 上映日期
+        /// </summary>
+        public DateTime ReleaseDate { get; set; }
+
+        /// <summary>
+        /// BD发售日期
+        /// </summary>
+        public DateTime BDReleaseDate { get; set; }
+
+        /// <summary>
+        /// 类型（剧场版或OVA）
+        /// </summary>
+        public string AnimeType { get; set; }
+
+        /// <summary>
+        /// 备注 [required]
+        /// </summary>
+        public string Comment { get; set; }
+
+        /// <summary>
+        /// 站点 [required]
+        /// </summary>
+        public List<SiteInfo> Sites { get; set; }
     }
 }

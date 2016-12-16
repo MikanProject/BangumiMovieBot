@@ -12,6 +12,7 @@ namespace BangumiMovieBot
         {
             FirstProcess();
             SecondProcess();
+            ThirdProcess();
             Console.ReadKey();
         }
 
@@ -25,6 +26,11 @@ namespace BangumiMovieBot
         {
             var processor = new MoegirlWikiProcessor();
             await processor.WriteFilesAsync(await processor.AddReleaseDateAsync());
+        }
+        static async void ThirdProcess()
+        {
+            var processor = new MoegirlWikiProcessor();
+            await processor.GenerateBangumiDataAsync();
         }
     }
 }
