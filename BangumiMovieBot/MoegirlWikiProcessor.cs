@@ -319,6 +319,7 @@ namespace BangumiMovieBot
         /// <summary>
         /// 类型（剧场版或OVA）
         /// </summary>
+        [JsonIgnore]
         public string AnimeType { get; set; }
 
         /// <summary>
