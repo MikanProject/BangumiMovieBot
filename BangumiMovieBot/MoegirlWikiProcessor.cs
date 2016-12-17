@@ -83,21 +83,23 @@ namespace BangumiMovieBot
             }
 
             if (!Directory.Exists("data")) Directory.CreateDirectory("data");
+            if (!Directory.Exists(Path.Combine("data", "items")))
+                Directory.CreateDirectory(Path.Combine("data", "items"));
             var firstDate = finalList.OrderBy(t => t.BDReleaseDate).First();
             var lastDate = finalList.OrderByDescending(t => t.BDReleaseDate).First();
             foreach (var year in Enumerable.Range(firstDate.BDReleaseDate.Year,
                 lastDate.BDReleaseDate.Year - firstDate.BDReleaseDate.Year + 1))
             {
-                if (!Directory.Exists(Path.Combine("data", year.ToString())))
-                    Directory.CreateDirectory(Path.Combine("data", year.ToString()));
+                if (!Directory.Exists(Path.Combine("data", "items", year.ToString())))
+                    Directory.CreateDirectory(Path.Combine("data", "items", year.ToString()));
                 await WriteFilesAsync(finalList
                         .Where(t => t.BDReleaseDate.Year == year && t.AnimeType == "剧场版")
                         .OrderBy(t => t.BDReleaseDate),
-                    Path.Combine("data", year.ToString(), "movie.json"));
+                    Path.Combine("data", "items", year.ToString(), "movie.json"));
                 await WriteFilesAsync(finalList
                         .Where(t => t.BDReleaseDate.Year == year && t.AnimeType == "OVA")
                         .OrderBy(t => t.BDReleaseDate),
-                    Path.Combine("data", year.ToString(), "ova.json"));
+                    Path.Combine("data", "items", year.ToString(), "ova.json"));
             }
         }
 
