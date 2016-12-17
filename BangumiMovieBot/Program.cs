@@ -13,6 +13,8 @@ namespace BangumiMovieBot
             FirstProcess();
             SecondProcess();
             ThirdProcess();
+            Console.WriteLine("Success.");
+            Console.ReadKey();
         }
 
         static void FirstProcess()
