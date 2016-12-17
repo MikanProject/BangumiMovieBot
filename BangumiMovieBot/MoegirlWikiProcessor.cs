@@ -64,8 +64,9 @@ namespace BangumiMovieBot
                     },
                     Lang = "ja",
                     OfficialSite = moegirlWikiInfo.BangumiInfo.OfficalHomePage,
+                    // ReSharper disable once PossibleInvalidOperationException
                     Begin = moegirlWikiInfo.BDReleaseDate.Value,
-                    End = (moegirlWikiInfo.BDReleaseDate + new TimeSpan(30*3)).Value,
+                    End = (moegirlWikiInfo.BDReleaseDate + new TimeSpan(30*3, 0, 0, 0)).Value,
                     Comment = "",
                     Sites = new List<BangumiDataInfo.SiteInfo>
                     {
@@ -133,7 +134,7 @@ namespace BangumiMovieBot
                     }
                 }
             }
-            return list;
+            return list.OrderBy(t=>t.ReleaseDate).ToList();
         }
 
         public async Task WriteFilesAsync<T>(T list)
@@ -150,7 +151,6 @@ namespace BangumiMovieBot
                     new JsonSerializerSettings {ContractResolver = new CamelCasePropertyNamesContractResolver()}));
             }
         }
-
 
         public async Task<List<MoegirlWikiInfo>> GetMovieInfoAsync(int startYear, int endYear)
         {
@@ -225,7 +225,7 @@ namespace BangumiMovieBot
                     }
                 }
             }
-            return list;
+            return list.OrderBy(t => t.ReleaseDate).ToList();
         }
     }
 
@@ -254,7 +254,6 @@ namespace BangumiMovieBot
         /// <summary>
         /// Bangumi信息
         /// </summary>
-        [JsonIgnore]
         public SubjectInfo BangumiInfo { get; set; }
     }
 
