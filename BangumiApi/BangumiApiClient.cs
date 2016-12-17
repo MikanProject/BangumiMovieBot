@@ -54,6 +54,10 @@ namespace BangumiApi
             }
             foreach (var subjectInfo in searchResultModel.SubjectInfo)
             {
+                if (string.IsNullOrWhiteSpace(subjectInfo.ChsName))
+                {
+                    subjectInfo.ChsName = subjectInfo.JpnName;
+                }
                 await AddAdditionalInformationAsync(subjectInfo.Id.ToString(), subjectInfo);
             }
             return searchResultModel;
