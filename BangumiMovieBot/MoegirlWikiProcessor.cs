@@ -68,7 +68,7 @@ namespace BangumiMovieBot
                         {"zh-Hans", new List<string> {moegirlWikiInfo.BangumiInfo.ChsName}}
                     },
                     Lang = "ja",
-                    OfficialSite = moegirlWikiInfo.BangumiInfo.OfficalHomePage,
+                    OfficialSite = moegirlWikiInfo.BangumiInfo.OfficalHomePage ?? "",
                     // ReSharper disable once PossibleInvalidOperationException
                     Begin = moegirlWikiInfo.BDReleaseDate.Value,
                     End = (moegirlWikiInfo.BDReleaseDate + new TimeSpan(30*3, 0, 0, 0)).Value,
