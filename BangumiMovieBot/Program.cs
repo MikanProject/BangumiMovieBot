@@ -16,21 +16,22 @@ namespace BangumiMovieBot
             Console.ReadKey();
         }
 
-        static async void FirstProcess()
+        static void FirstProcess()
         {
             var processor = new MoegirlWikiProcessor();
-            await processor.WriteFilesAsync(
-                await processor.GetMovieInfoAsync(2014, (DateTime.UtcNow + TimeSpan.FromDays(31)).Year));
+            processor.WriteFilesAsync(
+                processor.GetMovieInfoAsync(2014, (DateTime.UtcNow + TimeSpan.FromDays(31)).Year).Result
+            ).Wait();
         }
-        static async void SecondProcess()
+        static void SecondProcess()
         {
             var processor = new MoegirlWikiProcessor();
-            await processor.WriteFilesAsync(await processor.AddReleaseDateAsync());
+            processor.WriteFilesAsync(processor.AddReleaseDateAsync().Result).Wait();
         }
-        static async void ThirdProcess()
+        static void ThirdProcess()
         {
             var processor = new MoegirlWikiProcessor();
-            await processor.GenerateBangumiDataAsync();
+            processor.GenerateBangumiDataAsync().Wait();
         }
     }
 }

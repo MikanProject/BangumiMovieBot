@@ -85,9 +85,8 @@ namespace BangumiMovieBot
             if (!Directory.Exists("data")) Directory.CreateDirectory("data");
             var firstDate = finalList.OrderBy(t => t.BDReleaseDate).First();
             var lastDate = finalList.OrderByDescending(t => t.BDReleaseDate).First();
-            foreach (var year in
-                Enumerable.Range(firstDate.BDReleaseDate.Year,
-                    lastDate.BDReleaseDate.Year - firstDate.BDReleaseDate.Year + 1))
+            foreach (var year in Enumerable.Range(firstDate.BDReleaseDate.Year,
+                lastDate.BDReleaseDate.Year - firstDate.BDReleaseDate.Year + 1))
             {
                 if (!Directory.Exists(Path.Combine("data", year.ToString())))
                     Directory.CreateDirectory(Path.Combine("data", year.ToString()));
@@ -126,6 +125,11 @@ namespace BangumiMovieBot
                     try
                     {
                         moegirlWikiInfo.BDReleaseDate = DateTime.Parse(node.InnerText);
+                        if (moegirlWikiInfo.BDReleaseDate < moegirlWikiInfo.ReleaseDate)
+                        {
+                            moegirlWikiInfo.BDReleaseDate = null;
+                            continue;
+                        }
                         break;
                     }
                     catch
