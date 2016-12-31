@@ -71,7 +71,7 @@ namespace BangumiMovieBot
                     OfficialSite = moegirlWikiInfo.BangumiInfo.OfficalHomePage ?? "",
                     // ReSharper disable once PossibleInvalidOperationException
                     Begin = moegirlWikiInfo.BDReleaseDate.Value,
-                    End = (moegirlWikiInfo.BDReleaseDate + new TimeSpan(30*3, 0, 0, 0)).Value,
+                    End = (moegirlWikiInfo.BDReleaseDate + new TimeSpan(30, 0, 0, 0)).Value,
                     Comment = "",
                     Sites = new List<BangumiDataInfo.SiteInfo>
                     {
