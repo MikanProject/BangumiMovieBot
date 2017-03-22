@@ -175,8 +175,9 @@ namespace BangumiMovieBot
                 var html = await HttpClient.GetStringAsync(string.Format(DataUrl, i));
                 foreach (Match match in Regex.Matches(html))
                 {
-                    DateTime temp;
-                    if (!DateTime.TryParse(match.Groups["showDate"].Value, out temp))
+#pragma warning disable 168
+                    if (!DateTime.TryParse(match.Groups["showDate"].Value, out DateTime temp))
+#pragma warning restore 168
                     {
                         Console.WriteLine($"Error in {match.Groups["name"].Value}");
                         continue;
