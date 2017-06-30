@@ -168,7 +168,7 @@ namespace BangumiMovieBot
             return await GetMovieInfoAsync(startYear, endYear, await ReadFilesAsync());
         }
 
-        public async Task<List<MoegirlWikiInfo>> GetMovieInfoAsync(int startYear,int endYear, List<MoegirlWikiInfo> list)
+        public async Task<List<MoegirlWikiInfo>> GetMovieInfoAsync(int startYear, int endYear, List<MoegirlWikiInfo> list)
         {
             for (var i = startYear; i <= endYear; i++)
             {
@@ -176,7 +176,9 @@ namespace BangumiMovieBot
                 foreach (Match match in Regex.Matches(html))
                 {
 #pragma warning disable 168
-                    if (!DateTime.TryParse(match.Groups["showDate"].Value, out DateTime temp))
+                    if (!DateTime.TryParse(match.Groups["showDate"].Value, out DateTime temp) ||
+                        match.Groups["releaseDate"].Value != "" &&
+                        !DateTime.TryParse(match.Groups["releaseDate"].Value, out DateTime temp2))
 #pragma warning restore 168
                     {
                         Console.WriteLine($"Error in {match.Groups["name"].Value}");
