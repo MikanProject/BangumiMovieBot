@@ -50,7 +50,7 @@ namespace BangumiMovieBot
             var finalList = new List<BangumiDataInfo>();
             foreach (var moegirlWikiInfo in list.Where(t => t.BangumiId == 0 && t.ReleaseDate < DateTime.UtcNow))
             {
-                Console.WriteLine($"Warn: {moegirlWikiInfo.BangumiInfo.ChsName} has released, " +
+                Console.WriteLine($"Warn: {moegirlWikiInfo.Name} has released, " +
                                   "but there is no BangumiId");
             }
             foreach (var moegirlWikiInfo in list.Where(t => t.BDReleaseDate != null && t.BangumiId != 0 && t.BangumiId != -1))

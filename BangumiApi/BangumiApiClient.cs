@@ -21,7 +21,7 @@ namespace BangumiApi
         protected readonly Regex OfficalHomePageRegex = new Regex(@"(?<=<li><span class=""tip"">官方网站: </span>)http://.*?(?=</li>)", RegexOptions.Compiled);
         protected readonly Regex DayOfWeekRegex = new Regex(@"(?<=<li><span class=""tip"">放送星期: </span>).*?(?=</li>)", RegexOptions.Compiled);
         protected readonly Regex SpecialOnAirDateRegex = new Regex(@"(?<=<li><span class=""tip"">(上映年度|发售日): </span>).*?(?=</li>)", RegexOptions.Compiled);
-        protected readonly Regex AnimeTypeRegex = new Regex(@"(?<=<small class=""grey"">).+?(?=</small>   </h1>)");
+        protected readonly Regex AnimeTypeRegex = new Regex(@"(?<=<small class=""grey"">).+?(?=</small> *</h1>)");
         protected HttpClient HttpClient = new HttpClient();
 
         public async Task<SearchResultModel> SearchSubjectAsync(SearchSubjectModel searchSubjectModel)
