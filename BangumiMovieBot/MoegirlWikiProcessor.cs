@@ -188,7 +188,7 @@ namespace BangumiMovieBot
                         t.Name == match.Groups["name"].Value &&
                         t.ReleaseDate == DateTime.Parse(match.Groups["showDate"].Value) &&
                         (match.Groups["releaseDate"].Value == "" ||
-                         t.ReleaseDate == DateTime.Parse(match.Groups["releaseDate"].Value)));
+                         t.BDReleaseDate == DateTime.Parse(match.Groups["releaseDate"].Value)));
                     if (info != null) continue;
                     info = list.FirstOrDefault(t =>
                         t.Name == match.Groups["name"].Value &&
