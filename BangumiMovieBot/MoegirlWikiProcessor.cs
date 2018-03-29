@@ -53,25 +53,41 @@ namespace BangumiMovieBot
                 Console.WriteLine($"Warn: {moegirlWikiInfo.Name} has released, " +
                                   "but there is no BangumiId");
             }
-            foreach (var moegirlWikiInfo in list.Where(t => t.BDReleaseDate != null && t.BangumiId != 0 && t.BangumiId != -1))
+
+            foreach (var moegirlWikiInfo in list.Where(t =>
+                (t.BangumiId != 0 && t.BangumiId != -1) && list.Count(d => d.BangumiId == t.BangumiId) > 1))
+            {
+                Console.WriteLine($"Warn: {moegirlWikiInfo.Name}, {moegirlWikiInfo.BangumiId} have duplicate items.");
+            }
+
+            foreach (var moegirlWikiInfo in list.Where(t =>
+                t.BDReleaseDate != null && t.BangumiId != 0 && t.BangumiId != -1))
             {
                 if (moegirlWikiInfo.BangumiInfo == null)
                 {
                     moegirlWikiInfo.BangumiInfo =
                         await BangumiApiClient.GetSubjectAsync(moegirlWikiInfo.BangumiId.ToString());
                 }
+
                 finalList.Add(new BangumiDataInfo
                 {
                     Title = moegirlWikiInfo.BangumiInfo.JpnName,
                     TitleTranslate = new Dictionary<string, List<string>>
                     {
-                        {"zh-Hans", new List<string> {moegirlWikiInfo.BangumiInfo.ChsName}}
+                        {
+                            "zh-Hans", new List<string>
+                            {
+                                string.IsNullOrEmpty(moegirlWikiInfo.BangumiInfo.ChsName)
+                                    ? moegirlWikiInfo.BangumiInfo.JpnName
+                                    : moegirlWikiInfo.BangumiInfo.ChsName
+                            }
+                        }
                     },
                     Lang = "ja",
                     OfficialSite = moegirlWikiInfo.BangumiInfo.OfficalHomePage ?? "",
                     // ReSharper disable once PossibleInvalidOperationException
-                    Begin = moegirlWikiInfo.BDReleaseDate.Value,
-                    End = (moegirlWikiInfo.BDReleaseDate + new TimeSpan(30, 0, 0, 0)).Value,
+                    Begin = moegirlWikiInfo.ReleaseDate,
+                    End = "",
                     Comment = "",
                     Sites = new List<BangumiDataInfo.SiteInfo>
                     {
@@ -81,9 +97,8 @@ namespace BangumiMovieBot
                             Id = moegirlWikiInfo.BangumiId.ToString()
                         }
                     },
-                    ReleaseDate = moegirlWikiInfo.ReleaseDate,
                     BDReleaseDate = moegirlWikiInfo.BDReleaseDate.Value,
-                    AnimeType = moegirlWikiInfo.BangumiInfo.AnimeType
+                    Type = moegirlWikiInfo.BangumiInfo.AnimeType
                 });
             }
 
@@ -98,11 +113,11 @@ namespace BangumiMovieBot
                 if (!Directory.Exists(Path.Combine("data", "items", year.ToString())))
                     Directory.CreateDirectory(Path.Combine("data", "items", year.ToString()));
                 await WriteFilesAsync(finalList
-                        .Where(t => t.BDReleaseDate.Year == year && t.AnimeType == "剧场版")
+                        .Where(t => t.BDReleaseDate.Year == year && t.Type == "movie")
                         .OrderBy(t => t.BDReleaseDate),
                     Path.Combine("data", "items", year.ToString(), "movie.json"));
                 await WriteFilesAsync(finalList
-                        .Where(t => t.BDReleaseDate.Year == year && t.AnimeType == "OVA")
+                        .Where(t => t.BDReleaseDate.Year == year && t.Type == "ova")
                         .OrderBy(t => t.BDReleaseDate),
                     Path.Combine("data", "items", year.ToString(), "ova.json"));
             }
@@ -122,6 +137,7 @@ namespace BangumiMovieBot
                     if (moegirlWikiInfo.BangumiId == 0 || moegirlWikiInfo.BangumiId == -1) continue;
                     moegirlWikiInfo.BangumiInfo = await BangumiApiClient.GetSubjectAsync(moegirlWikiInfo.BangumiId.ToString());
                 }
+
                 var resultXml = new XmlDocument();
                 resultXml.Load(string.Format(ReleaseDateQueryUrl,
                     WebUtility.UrlEncode(moegirlWikiInfo.BangumiInfo.JpnName.Replace("＆", " "))));
@@ -184,7 +200,9 @@ namespace BangumiMovieBot
                         Console.WriteLine($"Error in {match.Groups["name"].Value}");
                         continue;
                     }
-                    var info = list.FirstOrDefault(t =>
+
+                    var info = list.FirstOrDefault(t => t.Name == match.Groups["name"].Value);
+                    /*var info = list.FirstOrDefault(t =>
                         t.Name == match.Groups["name"].Value &&
                         t.ReleaseDate == DateTime.Parse(match.Groups["showDate"].Value) &&
                         (match.Groups["releaseDate"].Value == "" ||
@@ -192,7 +210,7 @@ namespace BangumiMovieBot
                     if (info != null) continue;
                     info = list.FirstOrDefault(t =>
                         t.Name == match.Groups["name"].Value &&
-                        t.ReleaseDate == DateTime.Parse(match.Groups["showDate"].Value));
+                        t.ReleaseDate == DateTime.Parse(match.Groups["showDate"].Value));*/
                     if (info == null)
                     {
                         info = new MoegirlWikiInfo
@@ -239,6 +257,15 @@ namespace BangumiMovieBot
                     }
                 }
             }
+
+            foreach (var moegirlWikiInfo in list.Where(t => t.BangumiInfo != null))
+            {
+                if (string.IsNullOrWhiteSpace(moegirlWikiInfo.BangumiInfo.AnimeType))
+                    moegirlWikiInfo.BangumiInfo.AnimeType = "movie";
+                moegirlWikiInfo.BangumiInfo.AnimeType = moegirlWikiInfo.BangumiInfo.AnimeType.ToLower();
+                moegirlWikiInfo.BangumiInfo.AnimeType = moegirlWikiInfo.BangumiInfo.AnimeType.Replace("剧场版", "movie");
+            }
+
             return list.OrderBy(t => t.ReleaseDate).ToList();
         }
     }
@@ -290,6 +317,11 @@ namespace BangumiMovieBot
         public Dictionary<string,List<string>> TitleTranslate { get; set; }
 
         /// <summary>
+        /// 类型（剧场版或OVA）
+        /// </summary>
+        public string Type { get; set; }
+
+        /// <summary>
         /// 番组语言 [required]
         /// </summary>
         public string Lang { get; set; }
@@ -307,23 +339,12 @@ namespace BangumiMovieBot
         /// <summary>
         /// 番组开始时间，还未确定则置空 [required]
         /// </summary>
-        public DateTime End { get; set; }
-
-        /// <summary>
-        /// 上映日期
-        /// </summary>
-        public DateTime ReleaseDate { get; set; }
+        public string End { get; set; }
 
         /// <summary>
         /// BD发售日期
         /// </summary>
         public DateTime BDReleaseDate { get; set; }
-
-        /// <summary>
-        /// 类型（剧场版或OVA）
-        /// </summary>
-        [JsonIgnore]
-        public string AnimeType { get; set; }
 
         /// <summary>
         /// 备注 [required]

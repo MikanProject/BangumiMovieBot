@@ -86,7 +86,8 @@ namespace BangumiApi
             var totalEpisodeMatch = TotalEpisodeRegex.Match(rawContent);
             if (totalEpisodeMatch.Success) subjectInfo.TotalEpisode = string.IsNullOrWhiteSpace(totalEpisodeMatch.Value) ? null : totalEpisodeMatch.Value;
             var animeTypeMatch = AnimeTypeRegex.Match(rawContent);
-            if (animeTypeMatch.Success) subjectInfo.AnimeType = string.IsNullOrWhiteSpace(animeTypeMatch.Value) ? null : animeTypeMatch.Value;
+            if (animeTypeMatch.Success) subjectInfo.AnimeType = string.IsNullOrWhiteSpace(animeTypeMatch.Value) ? null : animeTypeMatch.Value.ToLower();
+            subjectInfo.AnimeType = subjectInfo.AnimeType?.Replace("剧场版", "movie");
             var officalHomePageMatch = OfficalHomePageRegex.Match(rawContent);
             if (officalHomePageMatch.Success) subjectInfo.OfficalHomePage = string.IsNullOrWhiteSpace(officalHomePageMatch.Value) ? null : officalHomePageMatch.Value;
             var specialOnAirDateMatch = SpecialOnAirDateRegex.Match(rawContent);
