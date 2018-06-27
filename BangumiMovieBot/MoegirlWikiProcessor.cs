@@ -17,9 +17,14 @@ namespace BangumiMovieBot
 {
     public class MoegirlWikiProcessor
     {
+        public MoegirlWikiProcessor()
+        {
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+        }
+
         private string DataUrl { get; } = "https://zh.moegirl.org/index.php?title=%E6%97%A5%E6%9C%AC{0}%E5%B9%B4%E5%89%A7%E5%9C%BA%E7%89%88%E5%8A%A8%E7%94%BB&action=edit";
 
-        private string ReleaseDateQueryUrl { get; } = "http://www.gameiroiro.com/search/ajax_search.php?type=amazon&num=4&keyword={0}&cat=&noimage=0";
+        private string ReleaseDateQueryUrl { get; } = "https://www.gameiroiro.com/search/ajax_search.php?type=amazon&num=4&keyword={0}&cat=&noimage=0";
 
         private string FilePath { get; } = "wiki_data.json";
 
