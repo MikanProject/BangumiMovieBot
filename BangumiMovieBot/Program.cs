@@ -21,7 +21,7 @@ namespace BangumiMovieBot
         {
             var processor = new MoegirlWikiProcessor();
             processor.WriteFilesAsync(
-                processor.GetMovieInfoAsync(2014, (DateTime.UtcNow + TimeSpan.FromDays(31)).Year).Result
+                processor.GetMovieInfoAsync(2015, (DateTime.UtcNow + TimeSpan.FromDays(31)).Year).Result
             ).Wait();
         }
         static void SecondProcess()

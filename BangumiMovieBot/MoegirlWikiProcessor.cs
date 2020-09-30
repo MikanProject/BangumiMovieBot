@@ -19,12 +19,19 @@ namespace BangumiMovieBot
     {
         public MoegirlWikiProcessor()
         {
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+            ServicePointManager.SecurityProtocol =
+                SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
+            HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd(UserAgent);
         }
 
-        private string DataUrl { get; } = "https://zh.moegirl.org/index.php?title=%E6%97%A5%E6%9C%AC{0}%E5%B9%B4%E5%89%A7%E5%9C%BA%E7%89%88%E5%8A%A8%E7%94%BB&action=edit";
+        private string DataUrl { get; } =
+            "https://zh.moegirl.org/index.php?title=%E6%97%A5%E6%9C%AC{0}%E5%B9%B4%E5%89%A7%E5%9C%BA%E7%89%88%E5%8A%A8%E7%94%BB&action=edit";
 
-        private string ReleaseDateQueryUrl { get; } = "https://www.gameiroiro.com/search/ajax_search.php?type=amazon&num=4&keyword={0}&cat=&noimage=0";
+        private string ReleaseDateQueryUrl { get; } =
+            "https://www.gameiroiro.com/search/ajax_search.php?type=amazon&num=4&keyword={0}&cat=&noimage=0";
+
+        private string UserAgent { get; } =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.121 Safari/537.36 Edg/85.0.564.63";
 
         private string FilePath { get; } = "wiki_data.json";
 
@@ -54,25 +61,19 @@ namespace BangumiMovieBot
         {
             var finalList = new List<BangumiDataInfo>();
             foreach (var moegirlWikiInfo in list.Where(t => t.BangumiId == 0 && t.ReleaseDate < DateTime.UtcNow))
-            {
                 Console.WriteLine($"Warn: {moegirlWikiInfo.Name} has released, " +
                                   "but there is no BangumiId");
-            }
 
             foreach (var moegirlWikiInfo in list.Where(t =>
-                (t.BangumiId != 0 && t.BangumiId != -1) && list.Count(d => d.BangumiId == t.BangumiId) > 1))
-            {
+                t.BangumiId != 0 && t.BangumiId != -1 && list.Count(d => d.BangumiId == t.BangumiId) > 1))
                 Console.WriteLine($"Warn: {moegirlWikiInfo.Name}, {moegirlWikiInfo.BangumiId} have duplicate items.");
-            }
 
             foreach (var moegirlWikiInfo in list.Where(t =>
                 t.BDReleaseDate != null && t.BangumiId != 0 && t.BangumiId != -1))
             {
                 if (moegirlWikiInfo.BangumiInfo == null)
-                {
                     moegirlWikiInfo.BangumiInfo =
                         await BangumiApiClient.GetSubjectAsync(moegirlWikiInfo.BangumiId.ToString());
-                }
 
                 finalList.Add(new BangumiDataInfo
                 {
@@ -140,7 +141,8 @@ namespace BangumiMovieBot
                 if (moegirlWikiInfo.BangumiInfo == null)
                 {
                     if (moegirlWikiInfo.BangumiId == 0 || moegirlWikiInfo.BangumiId == -1) continue;
-                    moegirlWikiInfo.BangumiInfo = await BangumiApiClient.GetSubjectAsync(moegirlWikiInfo.BangumiId.ToString());
+                    moegirlWikiInfo.BangumiInfo =
+                        await BangumiApiClient.GetSubjectAsync(moegirlWikiInfo.BangumiId.ToString());
                 }
 
                 var resultXml = new XmlDocument();
@@ -149,7 +151,6 @@ namespace BangumiMovieBot
                 var nodes = resultXml.SelectNodes("/items/item/date[(../binding='Blu-ray') or (../binding='DVD')]");
                 if (nodes == null) continue;
                 foreach (XmlNode node in nodes)
-                {
                     try
                     {
                         moegirlWikiInfo.BDReleaseDate = DateTime.Parse(node.InnerText);
@@ -158,15 +159,16 @@ namespace BangumiMovieBot
                             moegirlWikiInfo.BDReleaseDate = null;
                             continue;
                         }
+
                         break;
                     }
                     catch
                     {
                         // ignored
                     }
-                }
             }
-            return list.OrderBy(t=>t.ReleaseDate).ToList();
+
+            return list.OrderBy(t => t.ReleaseDate).ToList();
         }
 
         public async Task WriteFilesAsync<T>(T list)
@@ -180,7 +182,12 @@ namespace BangumiMovieBot
             using (var stream = File.CreateText(savePath))
             {
                 await stream.WriteAsync(JsonConvert.SerializeObject(list, Formatting.Indented,
-                    new JsonSerializerSettings {ContractResolver = new CamelCasePropertyNamesContractResolver()}));
+                    new JsonSerializerSettings
+                    {
+                        ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                        DateFormatHandling = DateFormatHandling.IsoDateFormat,
+                        DateTimeZoneHandling = DateTimeZoneHandling.Utc
+                    }));
             }
         }
 
@@ -189,7 +196,8 @@ namespace BangumiMovieBot
             return await GetMovieInfoAsync(startYear, endYear, await ReadFilesAsync());
         }
 
-        public async Task<List<MoegirlWikiInfo>> GetMovieInfoAsync(int startYear, int endYear, List<MoegirlWikiInfo> list)
+        public async Task<List<MoegirlWikiInfo>> GetMovieInfoAsync(int startYear, int endYear,
+            List<MoegirlWikiInfo> list)
         {
             for (var i = startYear; i <= endYear; i++)
             {
@@ -197,16 +205,16 @@ namespace BangumiMovieBot
                 foreach (Match match in Regex.Matches(html))
                 {
 #pragma warning disable 168
-                    if (!DateTime.TryParse(match.Groups["showDate"].Value, out DateTime temp) ||
+                    if (!DateTime.TryParse(match.Groups["showDate"].Value, out var temp) ||
                         match.Groups["releaseDate"].Value != "" &&
-                        !DateTime.TryParse(match.Groups["releaseDate"].Value, out DateTime temp2))
+                        !DateTime.TryParse(match.Groups["releaseDate"].Value, out var temp2))
 #pragma warning restore 168
                     {
                         Console.WriteLine($"Error in {match.Groups["name"].Value}");
                         continue;
                     }
 
-                    var info = list.FirstOrDefault(t => t.Name == match.Groups["name"].Value);
+                    var info = list.FirstOrDefault(t => t.Name.Trim() == match.Groups["name"].Value.Trim());
                     /*var info = list.FirstOrDefault(t =>
                         t.Name == match.Groups["name"].Value &&
                         t.ReleaseDate == DateTime.Parse(match.Groups["showDate"].Value) &&
@@ -220,11 +228,12 @@ namespace BangumiMovieBot
                     {
                         info = new MoegirlWikiInfo
                         {
-                            Name = match.Groups["name"].Value,
-                            ReleaseDate = DateTime.Parse(match.Groups["showDate"].Value)
+                            Name = match.Groups["name"].Value.Trim()
                         };
                         list.Add(info);
                     }
+
+                    info.Name = info.Name.Trim();
                     if (info.BangumiId == 0)
                     {
                         SearchResultModel searchResult;
@@ -238,22 +247,22 @@ namespace BangumiMovieBot
                             if (exception.Message.ToLower() == "not found") searchResult = new SearchResultModel();
                             else throw;
                         }
+
                         if (searchResult.Count != 0)
-                        {
                             foreach (var subjectInfo in searchResult.SubjectInfo)
-                            {
                                 if (subjectInfo.StartDate == DateTime.Parse(match.Groups["showDate"].Value))
                                 {
                                     info.BangumiInfo = subjectInfo;
                                     info.BangumiId = subjectInfo.Id;
-                                    Console.WriteLine($"I suppose movie {match.Groups["name"].Value} is {info.BangumiInfo.ChsName} in bgm.tv");
+                                    Console.WriteLine(
+                                        $"I suppose movie {match.Groups["name"].Value} is {info.BangumiInfo.ChsName} in bgm.tv");
                                     break;
                                 }
-                            }
-                        }
                     }
+
                     try
                     {
+                        info.ReleaseDate = DateTime.Parse(match.Groups["showDate"].Value);
                         info.BDReleaseDate = DateTime.Parse(match.Groups["releaseDate"].Value);
                     }
                     // ReSharper disable once EmptyGeneralCatchClause
@@ -278,87 +287,87 @@ namespace BangumiMovieBot
     public class MoegirlWikiInfo
     {
         /// <summary>
-        /// 萌娘百科上的名称
+        ///     萌娘百科上的名称
         /// </summary>
         public string Name { get; set; }
 
         /// <summary>
-        /// 上映日期
+        ///     上映日期
         /// </summary>
         public DateTime ReleaseDate { get; set; }
 
         /// <summary>
-        /// BD发售日期
+        ///     BD发售日期
         /// </summary>
         public DateTime? BDReleaseDate { get; set; }
 
         /// <summary>
-        /// Bangumi Id，0为尚无数据，-1为无效数据
+        ///     Bangumi Id，0为尚无数据，-1为无效数据
         /// </summary>
         public int BangumiId { get; set; }
 
         /// <summary>
-        /// Bangumi信息
+        ///     Bangumi信息
         /// </summary>
         public SubjectInfo BangumiInfo { get; set; }
     }
 
     public class BangumiDataInfo
     {
+        /// <summary>
+        ///     番组原始标题 [required]
+        /// </summary>
+        public string Title { get; set; }
+
+        /// <summary>
+        ///     番组标题翻译 [required]
+        /// </summary>
+        public Dictionary<string, List<string>> TitleTranslate { get; set; }
+
+        /// <summary>
+        ///     类型（剧场版或OVA）
+        /// </summary>
+        public string Type { get; set; }
+
+        /// <summary>
+        ///     番组语言 [required]
+        /// </summary>
+        public string Lang { get; set; }
+
+        /// <summary>
+        ///     官网 [required]
+        /// </summary>
+        public string OfficialSite { get; set; }
+
+        /// <summary>
+        ///     番组开始时间，还未确定则置空 [required]
+        /// </summary>
+        public DateTime Begin { get; set; }
+
+        /// <summary>
+        ///     番组开始时间，还未确定则置空 [required]
+        /// </summary>
+        public string End { get; set; }
+
+        /// <summary>
+        ///     BD发售日期
+        /// </summary>
+        public DateTime BDReleaseDate { get; set; }
+
+        /// <summary>
+        ///     备注 [required]
+        /// </summary>
+        public string Comment { get; set; }
+
+        /// <summary>
+        ///     站点 [required]
+        /// </summary>
+        public List<SiteInfo> Sites { get; set; }
+
         public class SiteInfo
         {
             public string Site { get; set; }
             public string Id { get; set; }
         }
-
-        /// <summary>
-        /// 番组原始标题 [required]
-        /// </summary>
-        public string Title { get; set; }
-
-        /// <summary>
-        /// 番组标题翻译 [required]
-        /// </summary>
-        public Dictionary<string,List<string>> TitleTranslate { get; set; }
-
-        /// <summary>
-        /// 类型（剧场版或OVA）
-        /// </summary>
-        public string Type { get; set; }
-
-        /// <summary>
-        /// 番组语言 [required]
-        /// </summary>
-        public string Lang { get; set; }
-
-        /// <summary>
-        /// 官网 [required]
-        /// </summary>
-        public string OfficialSite { get; set; }
-
-        /// <summary>
-        /// 番组开始时间，还未确定则置空 [required]
-        /// </summary>
-        public DateTime Begin { get; set; }
-
-        /// <summary>
-        /// 番组开始时间，还未确定则置空 [required]
-        /// </summary>
-        public string End { get; set; }
-
-        /// <summary>
-        /// BD发售日期
-        /// </summary>
-        public DateTime BDReleaseDate { get; set; }
-
-        /// <summary>
-        /// 备注 [required]
-        /// </summary>
-        public string Comment { get; set; }
-
-        /// <summary>
-        /// 站点 [required]
-        /// </summary>
-        public List<SiteInfo> Sites { get; set; }
     }
 }
