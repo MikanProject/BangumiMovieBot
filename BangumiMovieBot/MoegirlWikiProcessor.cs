@@ -36,7 +36,7 @@ namespace BangumiMovieBot
         private string FilePath { get; } = "wiki_data.json";
 
         private Regex Regex { get; } =
-            new Regex(@"^==(?<name>[^=]*)==[^=]*?上映日期：(?<showDate>.*?) .*?发售日期：(?<releaseDate>.*?)[(\n]",
+            new Regex(@"^===(?<name>[^=]*)===[^=]*?上映日期：(?<showDate>.*?) .*?发售日期：(?<releaseDate>.*?)[(\n]",
                 RegexOptions.Singleline | RegexOptions.Multiline | RegexOptions.Compiled);
 
         private BangumiApiClient BangumiApiClient { get; } = new BangumiApiClient();
